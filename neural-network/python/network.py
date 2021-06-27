@@ -19,6 +19,9 @@ import random
 # Third-party libraries
 import numpy as np
 
+# Edit: Serializing Network to Json
+import serialize
+
 class Network(object):
 
     def __init__(self, sizes):
@@ -69,10 +72,13 @@ class Network(object):
                 for k in range(0, n, mini_batch_size)]
             for mini_batch in mini_batches:
                 self.update_mini_batch(mini_batch, eta)
-            if test_data:
-                print("Epoch {} : {} / {}".format(j,self.evaluate(test_data),n_test))
+            if test_data: # edit: serialize on each test
+                n_success = self.evaluate(test_data)
+                print("Epoch {} : {} / {}".format(j,n_success,n_test))
+                serialize.saveJson(self, "{:.2f}".format(round((n_success/n_test) * 100, 2)))
             else:
                 print("Epoch {} complete".format(j))
+        serialize.saveJson(self) # edit: serialize on finishing
 
     def update_mini_batch(self, mini_batch, eta):
         """Update the network's weights and biases by applying
