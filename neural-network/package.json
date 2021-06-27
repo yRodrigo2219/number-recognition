@@ -5,13 +5,13 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "clear && node index.js"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "gaussian": "^1.2.0",
-    "linear-algebra": "^3.1.4",
-    "mathjs": "^9.4.3"
+    "mathjs": "^9.4.3",
+    "mnist": "^1.1.0"
   }
 }

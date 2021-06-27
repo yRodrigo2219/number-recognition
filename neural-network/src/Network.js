@@ -1,8 +1,6 @@
-const linearAlgebra = require("linear-algebra")(),
-  Vector = linearAlgebra.Vector,
-  Matrix = linearAlgebra.Matrix; // remover
 const gaussian = require("gaussian");
 const math = require("mathjs");
+// limpar imports (economizar memoria)
 
 class Network {
   constructor(sizes) {
@@ -21,13 +19,11 @@ class Network {
   }
 
   feedforward(a) {
-    [...Array(this.num_layers - 1)].forEach((_, i) => {
-      a = math.matrix(a);
-      const w = math.matrix(this.weights[i]);
-      const b = math.matrix(this.biases[i]);
+    this.biases.forEach((b, i) => {
+      const w = this.weights[i];
 
       a = Network.sigmoid(
-        math.add(math.multiply(w, a), b)._data // (w . a) + b
+        math.add(math.multiply(w, a), b) // (w . a) + b
       );
     });
 
@@ -35,43 +31,45 @@ class Network {
   }
 
   SGD(training_data, epochs, mini_batch_size, eta, test_data) {
-    const n_test = test_data.length;
+    const n_test = test_data?.length;
     const n = training_data.length;
     const mini_batches = [];
 
     for (let j = 0; j < epochs; j++) {
+      console.time("epoch" + j);
       shuffleArray(training_data);
       for (let k = 0; k < n; k += mini_batch_size)
         mini_batches.push(training_data.slice(k, k + mini_batch_size));
 
-      mini_batches.forEach((mini_batch) =>
-        this.update_mini_batch(mini_batch, eta)
-      );
+      mini_batches.forEach((mini_batch) => {
+        this.update_mini_batch(mini_batch, eta);
+      });
 
       if (test_data)
         console.log(`Epoch ${j}: ${this.evaluate(test_data)} / ${n_test}`);
       else console.log(`Epoch ${j}: complete`);
+      console.timeEnd("epoch" + j);
     }
   }
 
   update_mini_batch(mini_batch, eta) {
-    const nabla_b = this.biases.map((bias) =>
+    let nabla_b = this.biases.map((bias) =>
       math.zeros(math.matrix(bias)._size)
     );
-    const nabla_w = this.weights.map((weight) =>
+    let nabla_w = this.weights.map((weight) =>
       math.zeros(math.matrix(weight)._size)
     );
 
     for (const [x, y] of mini_batch) {
       const [delta_nabla_b, delta_nabla_w] = this.backprop(x, y);
-      nabla_b = nabla_b.map((nb, i) => nb + delta_nabla_b[i]);
-      nabla_w = nabla_w.map((nw, i) => nw + delta_nabla_w[i]);
+      nabla_b = nabla_b.map((nb, i) => math.add(nb, delta_nabla_b[i]));
+      nabla_w = nabla_w.map((nw, i) => math.add(nw, delta_nabla_w[i]));
 
-      this.weights = this.weights.map(
-        (w, i) => w - (eta / mini_batch.length) * nabla_w[i]
+      this.weights = this.weights.map((w, i) =>
+        math.subtract(w, math.dotMultiply(eta / mini_batch.length, nabla_w[i]))
       );
-      this.biases = this.biases.map(
-        (b, i) => b - (eta / mini_batch.length) * nabla_b[i]
+      this.biases = this.biases.map((b, i) =>
+        math.subtract(b, math.dotMultiply(eta / mini_batch.length, nabla_b[i]))
       );
     }
   }
@@ -90,6 +88,7 @@ class Network {
 
     this.biases.map((b, i) => {
       const w = this.weights[i];
+      //const z = b.map(([bi]) => math.add(math.multiply(w, activation), bi));
       const z = math.add(math.multiply(w, activation), b);
       zs.push(z);
       activation = Network.sigmoid(z);
@@ -108,7 +107,7 @@ class Network {
     );
 
     for (let l = 2; l < this.num_layers; l++) {
-      const z = zs[length - l];
+      const z = zs[zs.length - l];
       const sp = Network.sigmoid_prime(z);
       delta = math.dotMultiply(
         math.multiply(
@@ -117,8 +116,8 @@ class Network {
         ),
         sp
       );
-      nabla_b[nabla_b.length - 1] = delta;
-      nabla_w[nabla_w.length - 1] = math.multiply(
+      nabla_b[nabla_b.length - l] = delta;
+      nabla_w[nabla_w.length - l] = math.multiply(
         delta,
         math.transpose(activations[activations.length - l - 1])
       );
@@ -130,7 +129,7 @@ class Network {
   evaluate(test_data) {
     const test_results = test_data.map(([x, y]) => [
       this.feedforward(x).reduce(reducerArgmax, 0),
-      y,
+      y.reduce(reducerArgmax, 0),
     ]);
 
     return test_results.reduce((sum, [x, y]) => (x === y ? ++sum : sum), 0);
