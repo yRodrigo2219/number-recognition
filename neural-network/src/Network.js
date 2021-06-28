@@ -152,7 +152,7 @@ class Network {
   }
 }
 
-const reducerArgmax = (iMax, x, i, arr) => (x > arr[iMax] ? i : iMax);
+const reducerArgmax = (iMax, x, i, arr) => (x[0] > arr[iMax][0] ? i : iMax);
 
 function shuffleArray(array) {
   for (var i = array.length - 1; i > 0; i--) {

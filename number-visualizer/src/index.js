@@ -17,9 +17,17 @@ window.onload = async function () {
   const ctx_gray = canvas_gray.getContext("2d");
   const ctx_nn = canvas_nn.getContext("2d");
 
-  ctx_nn.imageSmoothingEnabled = true;
+  const colors = {
+    ui_out: "#D65DB1",
+    ui_line: "#FFD6FF",
+  };
 
-  const lineWidth = 80;
+  ctx_nn.msImageSmoothingEnabled = false;
+  ctx_nn.mozImageSmoothingEnabled = false;
+  ctx_nn.webkitImageSmoothingEnabled = false;
+  ctx_nn.imageSmoothingEnabled = false;
+
+  const lineWidth = 40;
   const box = {
     top: canvas_ui.height / 2,
     left: canvas_ui.width / 2,
@@ -33,11 +41,10 @@ window.onload = async function () {
   const net = new Network(data);
   guessElement.innerText = getResult(net, TestInput);
 
-  //ctx_gray.filter = "grayscale(1)";
+  ctx_gray.filter = "grayscale(100%)";
   clearCanvas();
 
-  /* IMAGE TEST
-   */
+  /* IMAGE TEST */
   const imageData = ctx_nn.getImageData(
     0,
     0,
@@ -45,19 +52,21 @@ window.onload = async function () {
     canvas_nn.height
   );
   const idata = imageData.data;
-  console.log(TestInput);
   for (let i = 0, j = 0; i < idata.length; i += 4, j++) {
     idata[i] = (1 - TestInput[j][0]) * 255;
     idata[i + 1] = (1 - TestInput[j][0]) * 255;
     idata[i + 2] = (1 - TestInput[j][0]) * 255;
     idata[i + 3] = 255;
   }
-
   ctx_nn.putImageData(imageData, 0, 0);
 
   canvas_ui.addEventListener("mousedown", startDrawing);
   canvas_ui.addEventListener("mouseup", stopDrawing);
   canvas_ui.addEventListener("mousemove", draw);
+
+  canvas_ui.addEventListener("touchstart", touchHandler, true);
+  canvas_ui.addEventListener("touchmove", touchHandler, true);
+  canvas_ui.addEventListener("touchend", touchHandler, true);
 
   function startDrawing(event) {
     clearCanvas();
@@ -80,7 +89,7 @@ window.onload = async function () {
     ctx_gray.lineWidth = lineWidth;
     ctx_ui.lineCap = "round";
     ctx_gray.lineCap = "square";
-    ctx_ui.strokeStyle = "#FFC75F";
+    ctx_ui.strokeStyle = colors.ui_line;
     ctx_gray.strokeStyle = "black";
     ctx_ui.moveTo(coords.x, coords.y);
     ctx_gray.moveTo(coords.x, coords.y);
@@ -160,20 +169,21 @@ window.onload = async function () {
   }
 
   function showBox() {
-    const smaller = 2;
+    const smaller =
+      window.innerWidth >= 800 ? (window.innerHeight >= 800 ? 1 : 2) : 2;
 
     border_div.style.cssText = `
       display: initial;
       left: ${box.left / smaller}px;
-      top: ${(box.top + canvas_ui.offsetTop * 2) / smaller}px;
+      top: ${(box.top + canvas_ui.offsetTop * smaller) / smaller}px;
       width: ${(box.right - box.left) / smaller}px;
       height: ${
         (box.bottom +
-          canvas_ui.offsetTop * 2 -
-          (box.top + canvas_ui.offsetTop * 2)) /
+          canvas_ui.offsetTop * smaller -
+          (box.top + canvas_ui.offsetTop * smaller)) /
         smaller
       }px;
-      border: 1px solid blue;
+      border: 1px solid #fcf7ff;
     `;
   }
 
@@ -186,13 +196,54 @@ window.onload = async function () {
   }
 
   function clearCanvas() {
-    ctx_ui.fillStyle = "#D8ACFF";
+    ctx_ui.fillStyle = colors.ui_out;
     ctx_gray.fillStyle = "white";
     ctx_nn.fillStyle = "white";
 
     ctx_ui.fillRect(0, 0, canvas_ui.width, canvas_ui.height);
     ctx_gray.fillRect(0, 0, canvas_ui.width, canvas_ui.height);
     ctx_nn.fillRect(0, 0, canvas_nn.width, canvas_nn.height);
+  }
+
+  function touchHandler(event) {
+    var touches = event.changedTouches,
+      first = touches[0],
+      type = "";
+    switch (event.type) {
+      case "touchstart":
+        type = "mousedown";
+        break;
+      case "touchmove":
+        type = "mousemove";
+        break;
+      case "touchend":
+        type = "mouseup";
+        break;
+      default:
+        return;
+    }
+
+    var simulatedEvent = document.createEvent("MouseEvent");
+    simulatedEvent.initMouseEvent(
+      type,
+      true,
+      true,
+      window,
+      1,
+      first.screenX,
+      first.screenY,
+      first.clientX,
+      first.clientY,
+      false,
+      false,
+      false,
+      false,
+      0 /*left*/,
+      null
+    );
+
+    first.target.dispatchEvent(simulatedEvent);
+    event.preventDefault();
   }
 };
 

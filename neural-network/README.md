@@ -15,3 +15,4 @@
 - Python3 code converted by [Michał Dobrzanski](https://github.com/MichalDanielDobrzanski/DeepLearningPython)
 - Original version made by [Michael Nielsen](https://github.com/mnielsen/neural-networks-and-deep-learning)
 - [Michael Nielsen's book](http://neuralnetworksanddeeplearning.com/chap1.html)
+- [MNIST data set](http://yann.lecun.com/exdb/mnist/)
