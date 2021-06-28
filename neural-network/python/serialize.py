@@ -20,7 +20,17 @@ def readJson(file_path):
   net.weights = [np.array(x) for x in net_dict["weights"]]
 
   return net
-  
+
+def saveInputJson(input):
+    newInput = [x.tolist() for x in input]
+    json.dump(newInput, codecs.open("input.json", 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=False, indent=2)
+
+def loadInputJson(file_path):
+    input_text = codecs.open(file_path, 'r', encoding='utf-8').read()
+    input_dict = json.loads(input_text)
+    input = [np.array(x) for x in input_dict]
+
+    return input
 
 #with open('network.json', 'w') as outfile:
 #  json.dump(net.__dict__, outfile)

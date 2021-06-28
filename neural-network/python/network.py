@@ -131,13 +131,16 @@ class Network(object):
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
-    def evaluate(self, test_data):
+    def evaluate(self, test_data, show_each = False):
         """Return the number of test inputs for which the neural
         network outputs the correct result. Note that the neural
         network's output is assumed to be the index of whichever
         neuron in the final layer has the highest activation."""
         test_results = [(np.argmax(self.feedforward(x)), y)
                         for (x, y) in test_data]
+        if show_each:
+            for n in range(0,10):
+                print(str(n) + "s: " + str(sum(int(x == y) for x, y in test_results if y == n)) + " / " + str(sum(1 for x, y in test_results if y == n)))
         return sum(int(x == y) for (x, y) in test_results)
 
     def cost_derivative(self, output_activations, y):
